@@ -1,0 +1,19 @@
+<div class="container mt-4">
+    <div class="glass-card">
+        <h3>Admin Panel</h3>
+        <table class="table table-dark">
+            <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Balance</th>
+            </tr>
+            {% for user in users %}
+            <tr>
+                <td>{{ user.full_name }}</td>
+                <td>{{ user.email }}</td>
+                <td>{{ user.balance }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+</div>

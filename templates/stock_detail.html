@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container mt-4">
+
+    <div class="glass-card p-4">
+
+        <!-- Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="mb-1">{{ symbol }}</h2>
+                {% if price %}
+                <h4 class="text-light">Current Price: ₹{{ price }}</h4>
+                {% endif %}
+            </div>
+
+            <a href="/dashboard" class="btn btn-sm btn-purple">← Back</a>
+        </div>
+
+        <!-- Timeframe Controls -->
+        <div class="mb-4">
+            {% set current_period = request.args.get('period', '1d') %}
+            <div class="d-flex flex-wrap gap-2">
+
+                <a href="?period=1d"
+                   class="btn btn-sm {% if current_period == '1d' %}btn-light{% else %}btn-purple{% endif %}">
+                   1D
+                </a>
+
+                <a href="?period=7d"
+                   class="btn btn-sm {% if current_period == '7d' %}btn-light{% else %}btn-purple{% endif %}">
+                   7D
+                </a>
+
+                <a href="?period=1mo"
+                   class="btn btn-sm {% if current_period == '1mo' %}btn-light{% else %}btn-purple{% endif %}">
+                   1M
+                </a>
+
+                <a href="?period=6mo"
+                   class="btn btn-sm {% if current_period == '6mo' %}btn-light{% else %}btn-purple{% endif %}">
+                   6M
+                </a>
+
+                <a href="?period=1y"
+                   class="btn btn-sm {% if current_period == '1y' %}btn-light{% else %}btn-purple{% endif %}">
+                   1Y
+                </a>
+
+                <a href="?period=5y"
+                   class="btn btn-sm {% if current_period == '5y' %}btn-light{% else %}btn-purple{% endif %}">
+                   5Y
+                </a>
+
+            </div>
+        </div>
+
+        <!-- Chart -->
+        <div class="mb-4" style="min-height: 500px;">
+            {{ chart|safe }}
+        </div>
+
+        <!-- Trading Buttons -->
+        <div class="d-flex gap-3 mt-3">
+            <a href="/buy/{{ symbol }}" class="btn btn-success px-4">
+                Buy
+            </a>
+
+            <a href="/sell/{{ symbol }}" class="btn btn-danger px-4">
+                Sell
+            </a>
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

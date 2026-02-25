@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container mt-4">
+
+    <!-- Top Summary Bar -->
+    <div class="glass-card mb-4 p-4 d-flex justify-content-between align-items-center">
+        <div>
+            <h6 class="mb-1">Available Balance</h6>
+            <h2 class="mb-0">₹{{ balance }}</h2>
+        </div>
+
+        <div class="d-flex gap-2">
+            <a href="/portfolio" class="btn btn-sm btn-purple">Holdings</a>
+            <a href="/positions" class="btn btn-sm btn-purple">Positions</a>
+            <a href="/logout" class="btn btn-sm btn-danger">Logout</a>
+        </div>
+    </div>
+
+    <!-- AI Priority Watchlist -->
+    <div class="glass-card mb-4 p-4">
+        <h4 class="mb-3">🔥 AI Priority Stocks</h4>
+        <div class="row">
+            {% for stock in stocks %}
+                {% if stock.priority %}
+                <div class="col-md-2 mb-3">
+                    <div class="stock-card priority text-center p-3">
+                        <h6>{{ stock.symbol }}</h6>
+                        <h5>₹{{ stock.price }}</h5>
+
+                        <a href="/stock/{{ stock.symbol }}"
+                           class="btn btn-sm btn-purple mt-2 w-100">
+                            View
+                        </a>
+                    </div>
+                </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Search Bar -->
+    <div class="mb-4">
+        <input type="text"
+               id="searchInput"
+               class="form-control"
+               placeholder="Search Stock (Example: SBIN.NS)">
+    </div>
+
+    <!-- All Stocks -->
+    <div class="row" id="stockGrid">
+        {% for stock in stocks %}
+        <div class="col-md-3 mb-4 stock-item">
+            <div class="stock-card {% if stock.priority %}priority{% endif %} p-3">
+
+                <h6 class="mb-2">{{ stock.symbol }}</h6>
+                <h5 class="mb-3">₹{{ stock.price }}</h5>
+
+                <div class="d-flex justify-content-between">
+                    <a href="/buy/{{ stock.symbol }}"
+                       class="btn btn-sm btn-success w-45">
+                        Buy
+                    </a>
+
+                    <a href="/stock/{{ stock.symbol }}"
+                       class="btn btn-sm btn-purple w-45">
+                        View
+                    </a>
+                </div>
+
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+</div>
+
+{% endblock %}

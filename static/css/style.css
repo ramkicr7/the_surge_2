@@ -1,0 +1,108 @@
+body {
+    margin: 0;
+    font-family: 'Poppins', sans-serif;
+    background: linear-gradient(135deg, #1a002b, #3d0072);
+    color: white;
+}
+
+/* NAVBAR */
+.navbar {
+    background: rgba(0,0,0,0.4);
+    backdrop-filter: blur(10px);
+}
+
+.navbar-brand {
+    font-weight: bold;
+    font-size: 22px;
+    letter-spacing: 2px;
+}
+
+/* SPLASH */
+.splash-container {
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.splash-title {
+    font-size: 70px;
+    font-weight: 700;
+    letter-spacing: 12px;
+    animation: fadeIn 3s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from {opacity:0;}
+    to {opacity:1;}
+}
+
+/* CARD STYLE */
+.glass-card {
+    background: rgba(255,255,255,0.08);
+    border-radius: 15px;
+    padding: 20px;
+    backdrop-filter: blur(15px);
+    box-shadow: 0 0 20px rgba(0,0,0,0.4);
+    transition: 0.3s;
+}
+
+.glass-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0 25px #9d4edd;
+}
+
+/* BUTTONS */
+.btn-purple {
+    background: #9d4edd;
+    border: none;
+    color: white;
+}
+
+.btn-purple:hover {
+    background: #c77dff;
+}
+
+/* STOCK GRID */
+.stock-card {
+    padding: 15px;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.05);
+    transition: 0.3s;
+}
+
+.stock-card:hover {
+    background: rgba(255,255,255,0.15);
+}
+
+.priority {
+    border: 2px solid gold;
+    box-shadow: 0 0 12px gold;
+}
+
+.price-up {
+    color: #00ff9d;
+}
+
+.price-down {
+    color: #ff4d6d;
+}
+
+/* INPUT */
+.form-control {
+    background: rgba(255,255,255,0.1);
+    border: none;
+    color: white;
+}
+
+.form-control:focus {
+    background: rgba(255,255,255,0.2);
+    box-shadow: none;
+}
+
+/* FOOTER */
+.footer {
+    text-align: center;
+    padding: 20px;
+    opacity: 0.6;
+}
