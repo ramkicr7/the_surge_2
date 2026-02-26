@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container mt-4">
+
+    <div class="glass-card p-4">
+        <h3 class="mb-4">📊 My Holdings</h3>
+
+        {% if holdings %}
+
+        <table class="table table-dark table-striped text-center align-middle">
+            <thead>
+                <tr>
+                    <th>Stock</th>
+                    <th>Mode</th>
+                    <th>Quantity</th>
+                    <th>Avg Price</th>
+                    <th>Live Price</th>
+                    <th>Holding Days</th>
+                    <th>Stop Loss</th>
+                    <th>Target</th>
+                    <th>Total Value</th>
+                    <th>P&L</th>
+                    <th>Sell</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for stock in holdings %}
+                <tr>
+
+                    <!-- STOCK -->
+                    <td>
+                        <a href="/stock/{{ stock.symbol }}" class="text-info">
+                            {{ stock.symbol }}
+                        </a>
+                    </td>
+
+                    <!-- MODE -->
+                    <td>
+                        {% if stock.trade_mode == "SWING" %}
+                            <span class="badge bg-warning text-dark">SWING</span>
+                        {% else %}
+                            <span class="badge bg-success">DELIVERY</span>
+                        {% endif %}
+                    </td>
+
+                    <td>{{ stock.quantity }}</td>
+
+                    <td>₹{{ stock.avg_price }}</td>
+
+                    <!-- LIVE PRICE -->
+                    <td>
+                        <span id="live-{{ stock.symbol }}">
+                            Loading...
+                        </span>
+                    </td>
+
+                    <!-- HOLDING DAYS -->
+                    <td>
+                        {% if stock.trade_mode == "SWING" %}
+                            {{ stock.holding_days }} days
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+
+                    <!-- STOP LOSS -->
+                    <td>
+                        {% if stock.stop_loss %}
+                            ₹{{ stock.stop_loss }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+
+                    <!-- TARGET -->
+                    <td>
+                        {% if stock.target_price %}
+                            ₹{{ stock.target_price }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+
+                    <!-- TOTAL VALUE -->
+                    <td id="value-{{ stock.symbol }}">
+                        -
+                    </td>
+
+                    <!-- PNL -->
+                    <td id="pnl-{{ stock.symbol }}">
+                        -
+                    </td>
+
+                    <!-- SELL -->
+                    <td>
+                        <form method="POST"
+                              action="/sell/{{ stock.symbol }}"
+                              class="d-flex gap-1 justify-content-center">
+
+                            <input type="number"
+                                   name="quantity"
+                                   min="1"
+                                   max="{{ stock.quantity }}"
+                                   value="1"
+                                   class="form-control form-control-sm"
+                                   style="width:80px;"
+                                   required>
+
+                            <button type="submit"
+                                    class="btn btn-sm btn-danger">
+                                Sell
+                            </button>
+                        </form>
+                    </td>
+
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        {% else %}
+            <div class="alert alert-info">
+                No holdings yet.
+            </div>
+        {% endif %}
+
+    </div>
+
+</div>
+
+
+<!-- ================= LIVE PRICE SCRIPT ================= -->
+<script>
+
+function fetchLivePrice(symbol, quantity, avgPrice) {
+
+    fetch(`/live-price/${symbol}`)
+        .then(response => response.json())
+        .then(data => {
+
+            if (data.price) {
+
+                let livePrice = data.price;
+
+                document.getElementById(`live-${symbol}`).innerHTML =
+                    `₹${livePrice}`;
+
+                let totalValue = (livePrice * quantity).toFixed(2);
+                document.getElementById(`value-${symbol}`).innerHTML =
+                    `₹${totalValue}`;
+
+                let pnl = ((livePrice - avgPrice) * quantity).toFixed(2);
+                let pnlElement = document.getElementById(`pnl-${symbol}`);
+
+                pnlElement.innerHTML = `₹${pnl}`;
+
+                pnlElement.classList.remove("text-success", "text-danger");
+
+                if (pnl >= 0) {
+                    pnlElement.classList.add("text-success");
+                } else {
+                    pnlElement.classList.add("text-danger");
+                }
+            }
+
+        });
+}
+
+{% for stock in holdings %}
+    fetchLivePrice(
+        "{{ stock.symbol }}",
+        {{ stock.quantity }},
+        {{ stock.avg_price }}
+    );
+{% endfor %}
+
+</script>
+
+{% endblock %}

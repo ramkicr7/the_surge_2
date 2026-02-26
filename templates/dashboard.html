@@ -3,11 +3,11 @@
 
 <div class="container mt-4">
 
-    <!-- Top Summary Bar -->
+    <!-- ================= TOP BAR ================= -->
     <div class="glass-card mb-4 p-4 d-flex justify-content-between align-items-center">
         <div>
-            <h6 class="mb-1">Available Balance</h6>
-            <h2 class="mb-0">₹{{ balance }}</h2>
+            <h6 class="mb-1 text-light">Available Balance</h6>
+            <h2 class="mb-0 text-white">₹{{ balance }}</h2>
         </div>
 
         <div class="d-flex gap-2">
@@ -17,20 +17,93 @@
         </div>
     </div>
 
-    <!-- AI Priority Watchlist -->
+    <!-- ================= SEARCH BAR ================= -->
+    <div class="glass-card mb-4 p-3">
+        <input type="text"
+               id="searchInput"
+               class="form-control"
+               placeholder="Search stocks (Ex: SBIN, bank, metal, food)">
+    </div>
+<script>
+document.querySelectorAll(".trade-mode-select").forEach(select => {
+
+    select.addEventListener("change", function() {
+
+        const infoBox = this.closest("form").querySelector(".intraday-info");
+
+        if (this.value === "INTRADAY") {
+            infoBox.style.display = "block";
+        } else {
+            infoBox.style.display = "none";
+        }
+
+    });
+
+});
+</script>
+    <!-- ================= QUICK SECTIONS ================= -->
+    <div class="row mb-4">
+
+        <div class="col-md-4">
+            <div class="glass-card p-3">
+                <h5 class="mb-3 text-warning">🔥 Most Traded</h5>
+                {% for stock in most_traded %}
+                <div class="mini-stock stock-item">
+                    <span>{{ stock.symbol }}</span>
+                    <span class="{% if stock.change >= 0 %}text-success{% else %}text-danger{% endif %}">
+                        ₹{{ stock.price }} ({{ stock.change }}%)
+                    </span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="glass-card p-3">
+                <h5 class="mb-3 text-success">📈 Top Gainers</h5>
+                {% for stock in top_gainers %}
+                <div class="mini-stock stock-item">
+                    <span>{{ stock.symbol }}</span>
+                    <span class="text-success">
+                        ₹{{ stock.price }} (+{{ stock.change }}%)
+                    </span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="glass-card p-3">
+                <h5 class="mb-3 text-danger">📉 Top Losers</h5>
+                {% for stock in top_losers %}
+                <div class="mini-stock stock-item">
+                    <span>{{ stock.symbol }}</span>
+                    <span class="text-danger">
+                        ₹{{ stock.price }} ({{ stock.change }}%)
+                    </span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ================= AI PRIORITY ================= -->
     <div class="glass-card mb-4 p-4">
-        <h4 class="mb-3">🔥 AI Priority Stocks</h4>
+        <h4 class="mb-3 text-warning">⭐ AI Priority Stocks</h4>
         <div class="row">
             {% for stock in stocks %}
                 {% if stock.priority %}
-                <div class="col-md-2 mb-3">
-                    <div class="stock-card priority text-center p-3">
+                <div class="col-md-3 mb-4 stock-item">
+                    <div class="stock-card priority p-3 text-center">
                         <h6>{{ stock.symbol }}</h6>
                         <h5>₹{{ stock.price }}</h5>
-
+                        <p class="{% if stock.change >= 0 %}text-success{% else %}text-danger{% endif %}">
+                            {{ stock.change }}%
+                        </p>
                         <a href="/stock/{{ stock.symbol }}"
-                           class="btn btn-sm btn-purple mt-2 w-100">
-                            View
+                           class="btn btn-sm btn-purple w-100">
+                            View Chart
                         </a>
                     </div>
                 </div>
@@ -39,40 +112,115 @@
         </div>
     </div>
 
-    <!-- Search Bar -->
-    <div class="mb-4">
-        <input type="text"
-               id="searchInput"
-               class="form-control"
-               placeholder="Search Stock (Example: SBIN.NS)">
+    <!-- ================= ALL STOCKS GRID ================= -->
+    <div class="glass-card p-4">
+        <h4 class="mb-3 text-info">📊 All Stocks</h4>
+
+        <div class="row" id="stockGrid">
+            {% for stock in stocks %}
+            <div class="col-md-3 mb-4 stock-item">
+                <div class="stock-card p-3">
+
+                    <h6>{{ stock.symbol }}</h6>
+                    <h5>₹{{ stock.price }}</h5>
+
+                    <p class="{% if stock.change >= 0 %}text-success{% else %}text-danger{% endif %}">
+                        {{ stock.change }}%
+                    </p>
+
+                    <!-- 🔥 UPDATED BUY FORM -->
+<form method="POST"
+      action="{{ url_for('trade.buy', symbol=stock.symbol) }}"
+      class="mt-2 mb-2">
+
+    <!-- Trade Mode -->
+    <div class="mb-2">
+        <select name="trade_mode"
+                class="form-select form-select-sm trade-mode-select"
+                required>
+            <option value="DELIVERY">Delivery (Long Term)</option>
+            <option value="INTRADAY">Intraday (5x Leverage)</option>
+            <option value="SWING">Swing</option>
+        </select>
     </div>
 
-    <!-- All Stocks -->
-    <div class="row" id="stockGrid">
-        {% for stock in stocks %}
-        <div class="col-md-3 mb-4 stock-item">
-            <div class="stock-card {% if stock.priority %}priority{% endif %} p-3">
+    <!-- Quantity + TPIN Row -->
+    <div class="d-flex gap-2 align-items-center mb-2">
 
-                <h6 class="mb-2">{{ stock.symbol }}</h6>
-                <h5 class="mb-3">₹{{ stock.price }}</h5>
+        <input type="number"
+               name="quantity"
+               min="1"
+               value="1"
+               class="form-control form-control-sm"
+               style="width:80px"
+               required>
 
-                <div class="d-flex justify-content-between">
-                    <a href="/buy/{{ stock.symbol }}"
-                       class="btn btn-sm btn-success w-45">
-                        Buy
-                    </a>
+        <input type="password"
+               name="tpin"
+               placeholder="TPIN"
+               class="form-control form-control-sm"
+               style="width:90px"
+               required>
+    </div>
 
+    <!-- Stop Loss & Target -->
+    <div class="d-flex gap-2 align-items-center mb-2">
+
+        <input type="number"
+               step="0.01"
+               name="stop_loss"
+               placeholder="Stop Loss"
+               class="form-control form-control-sm">
+
+        <input type="number"
+               step="0.01"
+               name="target_price"
+               placeholder="Target"
+               class="form-control form-control-sm">
+    </div>
+
+    <!-- Intraday Info Text -->
+    <div class="intraday-info small text-warning mb-2" style="display:none;">
+        ⚡ Intraday allows up to 5x leverage. Margin required = Total ÷ 5.
+    </div>
+
+    <button type="submit"
+            class="btn btn-sm btn-success w-100">
+        Buy
+    </button>
+
+</form>
+                    <!-- CHART BUTTON -->
                     <a href="/stock/{{ stock.symbol }}"
-                       class="btn btn-sm btn-purple w-45">
-                        View
+                       class="btn btn-sm btn-purple w-100">
+                        View Chart
                     </a>
-                </div>
 
+                </div>
             </div>
+            {% endfor %}
         </div>
-        {% endfor %}
     </div>
 
 </div>
+
+<script>
+document.getElementById("searchInput").addEventListener("keyup", function() {
+
+    let value = this.value.toLowerCase();
+    let items = document.getElementsByClassName("stock-item");
+
+    for (let i = 0; i < items.length; i++) {
+
+        let text = items[i].innerText.toLowerCase();
+
+        if (text.includes(value)) {
+            items[i].style.display = "";
+        } else {
+            items[i].style.display = "none";
+        }
+    }
+});
+</script>
 
 {% endblock %}

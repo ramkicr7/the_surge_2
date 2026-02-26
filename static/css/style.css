@@ -106,3 +106,34 @@ body {
     padding: 20px;
     opacity: 0.6;
 }
+/* ================= PREMIUM GOLD TABLE ================= */
+
+.performance-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #3b0a57;   /* Deep purple background */
+    border: 2px solid gold;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+/* Table cells */
+.performance-table td {
+    border: 1px solid gold;
+    padding: 16px;
+    color: white !important;
+    font-size: 15px;
+    background: #3b0a57 !important;
+}
+
+/* Labels (left column) */
+.performance-table td:nth-child(odd) {
+    font-weight: 600;
+    color: gold !important;
+}
+
+/* Hover glow effect */
+.performance-table:hover {
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+    transition: 0.3s ease-in-out;
+}
