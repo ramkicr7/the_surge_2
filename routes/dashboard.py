@@ -6,7 +6,12 @@ import yfinance as yf
 import plotly.graph_objs as go
 import pandas as pd
 import datetime
+
 dashboard = Blueprint("dashboard", __name__)
+
+
+# ---------------- UPDATE SWING HOLDING DAYS ----------------
+
 def update_holding_days():
 
     open_swing_trades = Trade.query.filter_by(
@@ -20,15 +25,20 @@ def update_holding_days():
 
     db.session.commit()
 
+
 # ---------------- SAFE PRICE FETCH ----------------
 
 def get_live_price(symbol):
+
     try:
         ticker = yf.Ticker(symbol)
         data = ticker.history(period="1d", interval="1m")
+
         if data.empty:
             return None
+
         return float(data["Close"].iloc[-1])
+
     except:
         return None
 
@@ -36,9 +46,11 @@ def get_live_price(symbol):
 # ---------------- STOP LOSS CHECK ----------------
 
 def check_stop_loss():
+
     open_trades = Trade.query.filter_by(status="OPEN").all()
 
     for trade in open_trades:
+
         current_price = get_live_price(trade.symbol)
 
         if not current_price:
@@ -80,6 +92,7 @@ PRIORITY_STOCKS = [
 "SBIN.NS","IRCTC.NS","TATAMOTORS.NS","BEL.NS","INDIGO.NS"
 ]
 
+
 # ---------------- DASHBOARD ----------------
 
 @dashboard.route("/dashboard")
@@ -89,7 +102,9 @@ def dashboard_page():
     stocks = []
 
     for symbol in TOP_100_STOCKS:
+
         try:
+
             ticker = yf.Ticker(symbol)
             data = ticker.history(period="2d", interval="1d")
 
@@ -138,11 +153,14 @@ def dashboard_page():
 def live_price(symbol):
 
     try:
+
         ticker = yf.Ticker(symbol)
         price = ticker.fast_info.get("last_price")
 
         if not price:
+
             data = ticker.history(period="1d", interval="1m")
+
             if not data.empty:
                 price = float(data["Close"].iloc[-1])
             else:
@@ -167,10 +185,10 @@ def stock_detail(symbol):
     period = request.args.get("period", "1y")
 
     try:
+
         ticker = yf.Ticker(symbol)
         info = ticker.info
 
-        # -------- PERFORMANCE --------
         performance = {
             "open": info.get("open"),
             "prev_close": info.get("previousClose"),
@@ -181,7 +199,6 @@ def stock_detail(symbol):
             "volume": info.get("volume")
         }
 
-        # -------- FUNDAMENTALS --------
         fundamentals = {
             "market_cap": info.get("marketCap"),
             "pe_ratio": info.get("trailingPE"),
@@ -192,32 +209,7 @@ def stock_detail(symbol):
             "dividend_yield": info.get("dividendYield")
         }
 
-        # -------- CHART DATA --------
-        if period == "1d":
-            data = ticker.history(period="5d", interval="5m")
-            if not data.empty:
-                data = data[data.index.date == data.index[-1].date()]
-
-        elif period == "7d":
-            data = ticker.history(period="1mo", interval="15m")
-            if not data.empty:
-                last_7 = data.index[-1] - pd.Timedelta(days=7)
-                data = data[data.index >= last_7]
-
-        elif period == "1mo":
-            data = ticker.history(period="1mo", interval="1h")
-
-        elif period == "6mo":
-            data = ticker.history(period="6mo", interval="1d")
-
-        elif period == "1y":
-            data = ticker.history(period="1y", interval="1d")
-
-        elif period == "5y":
-            data = ticker.history(period="5y", interval="1wk")
-
-        else:
-            data = ticker.history(period="1y", interval="1d")
+        data = ticker.history(period="1y", interval="1d")
 
         if data.empty:
             return render_template(
@@ -235,10 +227,8 @@ def stock_detail(symbol):
 
         fig = go.Figure()
 
-        x_axis = data["Datetime"] if "Datetime" in data.columns else data["Date"]
-
         fig.add_trace(go.Candlestick(
-            x=x_axis,
+            x=data["Date"],
             open=data["Open"],
             high=data["High"],
             low=data["Low"],
@@ -257,7 +247,9 @@ def stock_detail(symbol):
         chart = fig.to_html(full_html=False)
 
     except Exception as e:
+
         print("Stock Detail Error:", e)
+
         chart = "<h4>Error loading chart</h4>"
         current_price = None
         performance = {}
@@ -272,8 +264,8 @@ def stock_detail(symbol):
         fundamentals=fundamentals
     )
 
+
 # ---------------- PORTFOLIO ----------------
-import datetime
 
 @dashboard.route("/portfolio")
 @login_required
@@ -284,60 +276,22 @@ def portfolio():
         Trade.status == "OPEN"
     ).all()
 
-    portfolio_data = {}
-
-    for trade in trades:
-
-        key = (trade.symbol, trade.trade_mode)
-
-        if key not in portfolio_data:
-            portfolio_data[key] = {
-                "symbol": trade.symbol,
-                "trade_mode": trade.trade_mode,
-                "quantity": 0,
-                "total_cost": 0,
-                "stop_loss": trade.stop_loss,
-                "target_price": trade.target_price,
-                "timestamp": trade.timestamp
-            }
-
-        if trade.trade_type == "BUY":
-            portfolio_data[key]["quantity"] += trade.quantity
-            portfolio_data[key]["total_cost"] += trade.price * trade.quantity
-
-        elif trade.trade_type == "SELL":
-            portfolio_data[key]["quantity"] -= trade.quantity
-            portfolio_data[key]["total_cost"] -= trade.price * trade.quantity
-
-
     holdings = []
     intraday_positions = []
 
-    for (symbol, mode), data in portfolio_data.items():
-
-        if data["quantity"] <= 0:
-            continue
-
-        avg_price = data["total_cost"] / data["quantity"]
-
-        holding_days = 0
-        if mode == "SWING":
-            holding_days = (
-                datetime.datetime.utcnow() - data["timestamp"]
-            ).days
+    for trade in trades:
 
         record = {
-            "symbol": symbol,
-            "quantity": data["quantity"],
-            "avg_price": round(avg_price, 2),
-            "trade_mode": mode,
-            "holding_days": holding_days,
-            "stop_loss": data["stop_loss"],
-            "target_price": data["target_price"]
+            "symbol": trade.symbol,
+            "quantity": trade.quantity,
+            "avg_price": trade.price,
+            "trade_mode": trade.trade_mode,
+            "holding_days": 0,
+            "stop_loss": trade.stop_loss,
+            "target_price": trade.target_price
         }
 
-        # 🔥 Separate Intraday
-        if mode == "INTRADAY":
+        if trade.trade_mode == "INTRADAY":
             intraday_positions.append(record)
         else:
             holdings.append(record)
@@ -346,4 +300,63 @@ def portfolio():
         "portfolio.html",
         holdings=holdings,
         intraday_positions=intraday_positions
+    )
+
+
+# ---------------- POSITIONS ----------------
+
+@dashboard.route("/positions")
+@login_required
+def positions():
+
+    trades = Trade.query.filter(
+        Trade.user_id == current_user.id,
+        Trade.trade_mode == "INTRADAY",
+        Trade.status == "OPEN"
+    ).all()
+
+    positions_data = {}
+
+    for trade in trades:
+
+        if trade.symbol not in positions_data:
+
+            positions_data[trade.symbol] = {
+                "symbol": trade.symbol,
+                "buy_qty": 0,
+                "sell_qty": 0,
+                "buy_value": 0,
+                "sell_value": 0
+            }
+
+        if trade.trade_type == "BUY":
+            positions_data[trade.symbol]["buy_qty"] += trade.quantity
+            positions_data[trade.symbol]["buy_value"] += trade.price * trade.quantity
+
+        elif trade.trade_type == "SELL":
+            positions_data[trade.symbol]["sell_qty"] += trade.quantity
+            positions_data[trade.symbol]["sell_value"] += trade.price * trade.quantity
+
+    final_positions = []
+
+    for symbol, data in positions_data.items():
+
+        net_qty = data["buy_qty"] - data["sell_qty"]
+
+        avg_price = 0
+
+        if data["buy_qty"] > 0:
+            avg_price = data["buy_value"] / data["buy_qty"]
+
+        final_positions.append({
+            "symbol": symbol,
+            "buy_qty": data["buy_qty"],
+            "sell_qty": data["sell_qty"],
+            "net_qty": net_qty,
+            "avg_price": round(avg_price, 2)
+        })
+
+    return render_template(
+        "positions.html",
+        positions=final_positions
     )

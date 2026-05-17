@@ -5,6 +5,7 @@ from routes.auth import auth
 from routes.dashboard import dashboard
 from routes.trade import trade
 from models import User
+from routes.api import api
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -16,6 +17,7 @@ login_manager.login_view = "auth.login"   # 👈 important
 app.register_blueprint(auth)
 app.register_blueprint(dashboard)
 app.register_blueprint(trade)
+app.register_blueprint(api)
 
 @login_manager.user_loader
 def load_user(user_id):
